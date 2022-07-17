@@ -4,15 +4,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.image as mpimg
-from PIL import Image, ImageFont, ImageDraw 
+from PIL import Image, ImageFont, ImageDraw
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import time
 
-
+################ Get Data ############################################################
 
 # read the data
 Generell_Information = pd.read_csv('./Data/Player_Generell_Information.csv')
 Stats = pd.read_csv('./Data/Player_Stats.csv')
 
-################ Data preprocessing - Start ############################################################
+################ Data preprocessing ############################################################
 
 # add Rebound Column
 Rebounds = Stats["ORB"] + Stats["DRB"]
@@ -59,27 +62,26 @@ def showCard(Name):
        
         print(values)
 
-    # display generell information
-    # title_font = ImageFont.truetype('playfair/playfair-font.ttf', 200)
-   
-
+    # save and print card
     my_image.save("result.jpg")
-
     plt.imshow(mpimg.imread('result.jpg'))
     plt.show()
 
+########################  Function that gets Images from Google  #################################
 
+def getImage():
+
+    driver = webdriver.Chrome("/chromedriver")
+    driver.get("https://www.google.com/")
+
+
+getImage() 
+
+########################  Main = Take Input and get Card #################################
 
 Input = "Trae Young"
 
-
 showCard(Input)
-
-
-#########################################################
-
-
-
 
 
 
