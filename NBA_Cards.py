@@ -6,11 +6,27 @@ import numpy as np
 
 
 # read the data
-df = pd.read_csv('./Data/Player_Information.csv', index_col=0)
+Generell_Information = pd.read_csv('./Data/Player_Generell_Information.csv')
+Stats = pd.read_csv('./Data/Player_Stats.csv')
 
-# Was geeht ab
+# Data preprocessing 
+# Generell Information
+Generell_Information = Generell_Information[["Name", "Position","Age", "Height"]]
 
-print(df.head)
+# Stats 
+Stats = Stats[Stats["Season"] == "2021-22"]
+
+# add Rebound Column
+Rebounds = Stats["ORB"] + Stats["DRB"]
+
+# take only important Stats from Stats
+Stats = Stats[["Player", "G", "FG%", "3P%", "FT%", "AST", "TOV", "PTS", "Tm"]]
+Stats = Stats.rename({"Player": "Name"}, axis= "columns")
+
+# join 
+joint_Data = pd.merge(Generell_Information, Stats, on="Name", how = "right")
+
+print(joint_Data)
 
 
 '''
