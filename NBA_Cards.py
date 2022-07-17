@@ -8,6 +8,8 @@ import numpy as np
 # read the data
 df = pd.read_csv('./Data/Player_Information.csv', index_col=0)
 
+# Was geeht ab
+
 print(df.head)
 
 
