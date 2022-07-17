@@ -9,7 +9,7 @@ import numpy as np
 Generell_Information = pd.read_csv('./Data/Player_Generell_Information.csv')
 Stats = pd.read_csv('./Data/Player_Stats.csv')
 
-# Data preprocessing 
+################ Data preprocessing - Start ############################################################
 # Generell Information
 Generell_Information = Generell_Information[["Name", "Position","Age", "Height"]]
 
@@ -29,5 +29,6 @@ Stats = Stats.rename({"Player": "Name"}, axis= "columns")
 # merge 
 joint_Data = pd.merge(Generell_Information, Stats, on="Name", how = "right")
 
+################ Data preprocessing - End ############################################################
 
 print(joint_Data)
