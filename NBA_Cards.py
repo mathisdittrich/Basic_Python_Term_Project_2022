@@ -31,11 +31,9 @@ Rebounds = Stats["ORB"] + Stats["DRB"]
 Stats["Rebounds"] = Rebounds
 
 # add Overall Column
-Overall = Stats["Rebounds"] + Stats["PTS"] + 3*Stats["BLK"] + 2*Stats["AST"] + 3*Stats["STL"] + Stats["3P%"]/2 + Stats["FT%"]/10
+Overall = Stats["Rebounds"] + Stats["PTS"] + 3*Stats["BLK"] + 2*Stats["AST"] + 3*Stats["STL"] + Stats["3P%"]*30 + Stats["FT%"]/10
 normalized_Overall = (Overall-Overall.min())/(Overall.max()-Overall.min())*100
 Stats["Overall"] = normalized_Overall
-
-
 
 # take only iformation we need
 Generell_Information = Generell_Information[["Name", "Position","Age", "Height", "Weight"]]
@@ -83,7 +81,7 @@ def showCard(Name):
         # print name on the bottom
         image_editable.text((220, 630), values["Name"], (256, 256, 256), font = font_two)
         
-        ### print generell information on the left upper corner
+        ### print generell information on the left upper corner ###
         # make the layout for the stats
         image_editable.text((210,120), "Team:", (0, 0, 0), font = font)
         image_editable.text((210,170), "Position:", (0, 0, 0), font = font)
@@ -96,7 +94,7 @@ def showCard(Name):
         # image_editable.text((200,290), str(values["Weight"]), (0, 0, 0), font = font)
         
         
-        ### print stats below the foto
+        ### print stats below the foto ####
         # Points per Game
         image_editable.text((310,320), str(values["PTS"]), (0, 0, 0), font = font_three)
         image_editable.text((210,320), "Points:", (0, 0, 0), font = font_three)
@@ -175,6 +173,7 @@ def getImage(url):
 Example Names:
 # LeBron James
 # Kevin Durant
+# Stephen Curry
 # Trae Young
 # Bam Adebayo
 # Chris Paul 
@@ -184,10 +183,23 @@ Example Names:
 # Klay Thompson
 # Patty Mills
 # Rudy Gobert
+# Draymond Green
+# Al Horford
+# Giannis Antetokounmpo
+# Maxi Kleber
+# Zach LaVine
+# Kyle Lowry
+# Donovan Mitchell
+# D'Angelo Russell
+# Russell Westbrook
+# Steven Adams
+# Kevin Love
+
+
 
 '''
 
-Input = "Trae Young"
+Input = "Devin Booker"
 showCard(Input)
 
 
