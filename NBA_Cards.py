@@ -187,7 +187,7 @@ Example Names:
 
 '''
 
-Input = "Rudy Gobert"
+Input = "Trae Young"
 showCard(Input)
 
 
