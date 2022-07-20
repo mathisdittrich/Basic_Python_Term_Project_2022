@@ -9,6 +9,7 @@ import matplotlib.image as mpimg
 from PIL import Image, ImageFont, ImageDraw
 import requests
 import math
+import os  
 # from StringIO import StringIO
 
 
@@ -18,7 +19,7 @@ import math
 # read the data
 Generell_Information = pd.read_csv('./Data/Player_Generell_Information.csv')
 Stats = pd.read_csv('./Data/Player_Stats.csv')
-Player_ID = pd.read_csv('./Data/Player_ID.csv')
+player_id = pd.read_csv('./Data/Player_ID.csv')
 
 
 
@@ -36,27 +37,41 @@ normalized_Overall = (Overall-Overall.min())/(Overall.max()-Overall.min())*100
 Stats["Overall"] = normalized_Overall
 
 # take only iformation we need
-Generell_Information = Generell_Information[["Name", "Position","Age", "Height", "Weight"]]
+Generell_Information = Generell_Information[["Name", "Position","Age", "Height"]]
 Stats = Stats[Stats["Season"] == "2021-22"] # only Stats from the season 2021/22
-Stats = Stats[["Player", "G", "FG%", "3P%", "FT%", "AST", "TOV", "PTS", "Tm", "Rebounds", "STL", "BLK", "Overall"]]
+Stats = Stats[["Player", "FG%", "3P%", "AST", "TOV", "PTS", "Tm", "Rebounds", "STL", "BLK", "Overall"]]
+
+
+
+
+
+################ Merge Datasets ############################################################
 
 # prepare to merge on Name column & merge data sets
 Stats = Stats.rename({"Player": "Name"}, axis= "columns")
-joint_Data = pd.merge(Generell_Information, Stats, on="Name", how = "right") # merge 
+final_data = pd.merge(Generell_Information, Stats, on="Name", how = "right") # merge 
 
 # prepare to merge on Name column & merge data sets
-Player_ID = Player_ID[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
-Player_ID = Player_ID.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
-joint_Data = pd.merge(joint_Data, Player_ID, on="Name", how = "inner") # merge 
+player_id = player_id[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
+player_id = player_id.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
+final_data = pd.merge(final_data, player_id, on="Name", how = "inner") # merge 
 
-print(joint_Data.head())
+# store final_data set as csv-file
+os.makedirs('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project', exist_ok=True)  
+final_data.to_csv('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project/final_data.csv')  
+print(final_data.head(426))
+
+
+
+
+
 
 ################ Card Visualisation #############################################################
 
 def showCard(Name):
 
     # get the data from the row of the player
-    Player = joint_Data[joint_Data["Name"] == Name]
+    Player = final_data[final_data["Name"] == Name]
 
     # prepare the card and settings
     my_image = Image.open("card.png") # load image
@@ -86,12 +101,10 @@ def showCard(Name):
         image_editable.text((210,120), "Team:", (0, 0, 0), font = font)
         image_editable.text((210,170), "Position:", (0, 0, 0), font = font)
         image_editable.text((210,220), "Height:", (0, 0, 0), font = font)
-        # image_editable.text((200,270), "Weight:", (0, 0, 0), font = font)
         # print generell information of player
         image_editable.text((210,140), values["Tm"], (0, 0, 0), font = font)
         image_editable.text((210,190), values["Position"], (0, 0, 0), font = font)
         image_editable.text((210,240), str(values["Height"]), (0, 0, 0), font = font)
-        # image_editable.text((200,290), str(values["Weight"]), (0, 0, 0), font = font)
         
         
         ### print stats below the foto ####
@@ -105,8 +118,8 @@ def showCard(Name):
         image_editable.text((310,470), str(values["3P%"]), (0, 0, 0), font = font_three)
         image_editable.text((210,470), "3P%:", (0, 0, 0), font = font_three)
         # FT%
-        image_editable.text((310,545), str(values["AST"]), (0, 0, 0), font = font_three)
-        image_editable.text((210,545), "AST:", (0, 0, 0), font = font_three)
+        image_editable.text((310,545), str(values["FG%"]), (0, 0, 0), font = font_three)
+        image_editable.text((210,545), "FG%:", (0, 0, 0), font = font_three)
         # Rebounds
         image_editable.text((550,320), str(round((values["Rebounds"]),1)), (0, 0, 0), font = font_three)
         image_editable.text((420,320), "Rebounds:", (0, 0, 0), font = font_three)
@@ -123,14 +136,12 @@ def showCard(Name):
 
 
 
-
+        # print image on card
         if not math.isnan(values["PERSON_ID"]):
             url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(values["PERSON_ID"])  + ".png"
             print(url)
             my_image_two = getImage(url) 
             box = (280, 75, 620, 320)
-            # my_image_three = my_image_two.crop(box)
-            # my_image_three = my_image_two.crop((280, 75, 620, 320))
             my_image.paste(my_image_two, (335, 75))
        
         print(values)
@@ -160,9 +171,9 @@ def showCard(Name):
 def getImage(url):
 
     response = requests.get(url)
-    im = Image.open(BytesIO(response.content))
+    image = Image.open(BytesIO(response.content))
 
-    return im
+    return image
 
 
 
@@ -170,7 +181,7 @@ def getImage(url):
 
 ########################  Main = Take Input and get Card #################################
 '''
-Example Names:
+Example Players:
 # LeBron James
 # Kevin Durant
 # Stephen Curry
@@ -195,11 +206,9 @@ Example Names:
 # Steven Adams
 # Kevin Love
 
-
-
 '''
 
-Input = "Devin Booker"
+Input = "Kevin Love"
 showCard(Input)
 
 
