@@ -38,9 +38,6 @@ for i in range(len(Stats["Player"])):
     Stats["Player"][i] = str(unicodedata.normalize('NFKD', Stats["Player"][i]).encode('ascii', 'ignore'))
     Stats["Player"][i] = Stats["Player"][i][2:len(Stats["Player"][i])-1]
 
-# test
-print(any(Stats["Player"]=="Luka Doncic"))
-
 # add Rebound Column
 Rebounds = Stats["ORB"] + Stats["DRB"]
 Stats["Rebounds"] = Rebounds
@@ -60,7 +57,7 @@ player_id = player_id[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
 
 
 
-################ Merge Datasets ############################################################
+################ Merge Datasets & store the final one ############################################################
 
 # prepare to merge on Name column & merge data sets
 Stats = Stats.rename({"Player": "Name"}, axis= "columns")
@@ -72,15 +69,9 @@ player_id = player_id.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
 final_data = pd.merge(final_data, player_id, on="Name", how = "left") # merge 
 
 
-print("final data")
-
-print(final_data)
-
 # store final_data set as csv-file
 os.makedirs('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project', exist_ok=True)  
 final_data.to_csv('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project/final_data.csv')  
-print(final_data.head(50))
-
 
 
 
@@ -89,11 +80,6 @@ print(final_data.head(50))
 ################ Card Visualisation #############################################################
 
 def showCard(Name):
-
-    # get the data from the row of the player
-    Player = final_data[final_data["Name"] == Name]
-
-   
 
     # print the stats of the player on the card
     for i in range(len(final_data)):
@@ -167,14 +153,14 @@ def showCard(Name):
 
 
             
-            # print image on card
+            # print image from URL via Player_ID
             if not math.isnan(final_data["PERSON_ID"][i]):
                 url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(int(final_data["PERSON_ID"][i]))  + ".png"
                 print(url)
                 my_image_two = getImage(url) 
                 my_image.paste(my_image_two, (335, 75))
 
-            
+            # ELSE: print image from bing search
             else: 
                 my_image_three = bing_get_image(Name) # + " official picture"
                 box = (265,200)
@@ -186,8 +172,6 @@ def showCard(Name):
             plt.imshow(mpimg.imread('result.png'))
             plt.show()
         
-  
-    
 
 
 
@@ -195,6 +179,7 @@ def showCard(Name):
 
 ######################## Function that gets Images from Google  #################################
 
+# for official images from website
 def getImage(url):
 
     response = requests.get(url)
@@ -203,8 +188,7 @@ def getImage(url):
     return image
 
 
-
-
+# for pictures from websearch
 def bing_get_image(query_string):
 
     downloader.download(query_string, limit=1,  output_dir='other_players',
@@ -213,6 +197,9 @@ def bing_get_image(query_string):
     image_two = Image.open("other_players/" + query_string + "/Image_1.jpg")
 
     return image_two
+
+
+
 
 
 ########################  Main = Take Input and get Card #################################
@@ -246,56 +233,5 @@ Example Players:
 
 '''
 
-Input = "Dennis Schroder"
+Input = "Giannis Antetokounmpo"
 showCard(Input)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-
-
-
-def getImage(Player):
-
-    driver = webdriver.Chrome("./chromedriver")
-    driver.get("https://www.google.com/")
-
-    box = driver.find_element_by_xpath('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
-    box.send_keys('giraffe')
-    box.send_keys(Keys.ENTER)
-
-    driver.find_element_by_xpath('//*[@id="hdtb-msb-vis"]/div[2]/a').click()
-
-
-
-
-
-
-
-def getImage(url):
-
-    html_page = urllib2.urlopen(url)
-    soup = BeautifulSoup(html_page)
-    images = []
-    for img in soup.findAll('img'):
-        images.append(img.get('src'))
-
-    print(images)
-
-'''
