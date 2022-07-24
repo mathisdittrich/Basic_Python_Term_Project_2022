@@ -10,7 +10,8 @@ from PIL import Image, ImageFont, ImageDraw
 import requests
 import math
 import os  
-# from StringIO import StringIO
+from bing_image_downloader import downloader
+import unicodedata
 
 
 
@@ -27,12 +28,25 @@ player_id = pd.read_csv('./Data/Player_ID.csv')
 
 ################ Data preprocessing ############################################################
 
+# fill empty cells with zeros 
+# so that the overall score can be calculatet for every player
+Stats.fillna(0, inplace=True)
+
+# normalize special names to normal letters
+# example = "Luka Dončić" to "Luka Doncic"
+for i in range(len(Stats["Player"])):
+    Stats["Player"][i] = str(unicodedata.normalize('NFKD', Stats["Player"][i]).encode('ascii', 'ignore'))
+    Stats["Player"][i] = Stats["Player"][i][2:len(Stats["Player"][i])-1]
+
+# test
+print(any(Stats["Player"]=="Luka Doncic"))
+
 # add Rebound Column
 Rebounds = Stats["ORB"] + Stats["DRB"]
 Stats["Rebounds"] = Rebounds
 
 # add Overall Column
-Overall = Stats["Rebounds"] + Stats["PTS"] + 3*Stats["BLK"] + 2*Stats["AST"] + 3*Stats["STL"] + Stats["3P%"]*30 + Stats["FT%"]/10
+Overall = Stats["Rebounds"] + Stats["PTS"] + 3*Stats["BLK"] + 2*Stats["AST"] + 3*Stats["STL"] + Stats["3P%"]*30 + Stats["FG%"]*30 
 normalized_Overall = (Overall-Overall.min())/(Overall.max()-Overall.min())*100
 Stats["Overall"] = normalized_Overall
 
@@ -40,6 +54,7 @@ Stats["Overall"] = normalized_Overall
 Generell_Information = Generell_Information[["Name", "Position","Age", "Height"]]
 Stats = Stats[Stats["Season"] == "2021-22"] # only Stats from the season 2021/22
 Stats = Stats[["Player", "FG%", "3P%", "AST", "TOV", "PTS", "Tm", "Rebounds", "STL", "BLK", "Overall"]]
+player_id = player_id[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
 
 
 
@@ -49,17 +64,22 @@ Stats = Stats[["Player", "FG%", "3P%", "AST", "TOV", "PTS", "Tm", "Rebounds", "S
 
 # prepare to merge on Name column & merge data sets
 Stats = Stats.rename({"Player": "Name"}, axis= "columns")
-final_data = pd.merge(Generell_Information, Stats, on="Name", how = "right") # merge 
+final_data = pd.merge(Generell_Information, Stats, on="Name", how = "inner") # merge 
+
 
 # prepare to merge on Name column & merge data sets
-player_id = player_id[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
 player_id = player_id.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
-final_data = pd.merge(final_data, player_id, on="Name", how = "inner") # merge 
+final_data = pd.merge(final_data, player_id, on="Name", how = "left") # merge 
+
+
+print("final data")
+
+print(final_data)
 
 # store final_data set as csv-file
 os.makedirs('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project', exist_ok=True)  
 final_data.to_csv('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project/final_data.csv')  
-print(final_data.head(426))
+print(final_data.head(50))
 
 
 
@@ -73,94 +93,101 @@ def showCard(Name):
     # get the data from the row of the player
     Player = final_data[final_data["Name"] == Name]
 
-    # prepare the card and settings
-    my_image = Image.open("card.png") # load image
-    image_editable = ImageDraw.Draw(my_image) # prepare for change
-    font = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 20) # prepare Font
-    font_two = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 50) # prepare Font
-    font_three = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 25) # prepare Font
-
-
-    # design card
-    streifen = Image.open("streifen.png")
-    my_image.paste(streifen, (200, 300))
-    my_image.paste(streifen, (405, 300))
-    my_image.paste(streifen, (200, 450))
-    my_image.paste(streifen, (405, 450))
+   
 
     # print the stats of the player on the card
-    for (index, values) in pd.DataFrame.iterrows(Player):
-        print(values)
+    for i in range(len(final_data)):
+        if final_data["Name"][i] == Name:
 
+            # prepare the card and settings
+            my_image = Image.open("card.png") # load image
+            image_editable = ImageDraw.Draw(my_image) # prepare for change
+            font = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 20) # prepare Font
+            font_two = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 50) # prepare Font
+            font_three = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 25) # prepare Font
+            font_four = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 35) # prepare Font
+
+
+            # design card
+            streifen = Image.open("streifen.png")
+            my_image.paste(streifen, (200, 300))
+            my_image.paste(streifen, (405, 300))
+            my_image.paste(streifen, (200, 450))
+            my_image.paste(streifen, (405, 450))
         
-        # print name on the bottom
-        image_editable.text((220, 630), values["Name"], (256, 256, 256), font = font_two)
+            print(final_data["Name"][i])
+
+            # print name on the bottom
+            if len(final_data["Name"][i]) < 16:    image_editable.text((220, 630), final_data["Name"][i], (256, 256, 256), font = font_two)
+            else:   image_editable.text((220, 640), final_data["Name"][i], (256, 256, 256), font = font_four)
+            
+            ### print generell information on the left upper corner ###
+            # make the layout for the stats
+            image_editable.text((210,120), "Team:", (0, 0, 0), font = font)
+            image_editable.text((210,170), "Position:", (0, 0, 0), font = font)
+            image_editable.text((210,220), "Height:", (0, 0, 0), font = font)
+            # print generell information of player
+            image_editable.text((210,140), final_data["Tm"][i], (0, 0, 0), font = font)
+            image_editable.text((210,190), final_data["Position"][i], (0, 0, 0), font = font)
+            image_editable.text((210,240), str(final_data["Height"][i]), (0, 0, 0), font = font)
+            
+            
+            ### print stats below the foto ####
+            # Points per Game
+            image_editable.text((310,320), str(final_data["PTS"][i]), (0, 0, 0), font = font_three)
+            image_editable.text((210,320), "Points:", (0, 0, 0), font = font_three)
+            # Assists
+            image_editable.text((310,395), str(final_data["AST"][i]), (0, 0, 0), font = font_three)
+            image_editable.text((210,395), "AST:", (0, 0, 0), font = font_three)
+            # 3er%
+            image_editable.text((310,470), str(final_data["3P%"][i]), (0, 0, 0), font = font_three)
+            image_editable.text((210,470), "3P%:", (0, 0, 0), font = font_three)
+            # FT%
+            image_editable.text((310,545), str(final_data["FG%"][i]), (0, 0, 0), font = font_three)
+            image_editable.text((210,545), "FG%:", (0, 0, 0), font = font_three)
+            # Rebounds 
+            # formated to the length
+            if len(str(final_data["Rebounds"][i])) < 4:
+                image_editable.text((420,320), "Rebounds:", (0, 0, 0), font = font_three)
+                image_editable.text((550,320), str(round((final_data["Rebounds"][i]),1)), (0, 0, 0), font = font_three)
+            else: 
+                image_editable.text((420,320), "Reb:", (0, 0, 0), font = font_three)
+                image_editable.text((535,320), str(round((final_data["Rebounds"][i]),1)), (0, 0, 0), font = font_three)
+
+            # Steals
+            image_editable.text((550,395), str(final_data["STL"][i]), (0, 0, 0), font = font_three)
+            image_editable.text((420,395), "Steals:", (0, 0, 0), font = font_three)
+            # Blocks
+            image_editable.text((550,470), str(final_data["BLK"][i]), (0, 0, 0), font = font_three)
+            image_editable.text((420,470), "Blocks:", (0, 0, 0), font = font_three)
+            # Overall
+            image_editable.text((550,545), str(int(final_data["Overall"][i])), (0, 0, 0), font = font_three)
+            image_editable.text((420,545), "Overall:", (0, 0, 0), font = font_three)
+
+
+
+            
+            # print image on card
+            if not math.isnan(final_data["PERSON_ID"][i]):
+                url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(int(final_data["PERSON_ID"][i]))  + ".png"
+                print(url)
+                my_image_two = getImage(url) 
+                my_image.paste(my_image_two, (335, 75))
+
+            
+            else: 
+                my_image_three = bing_get_image(Name) # + " official picture"
+                box = (265,200)
+                my_image_three = my_image_three.resize(box) 
+                my_image.paste(my_image_three, (335, 75))
+
+            # save and print card
+            my_image.save("result.png")
+            plt.imshow(mpimg.imread('result.png'))
+            plt.show()
         
-        ### print generell information on the left upper corner ###
-        # make the layout for the stats
-        image_editable.text((210,120), "Team:", (0, 0, 0), font = font)
-        image_editable.text((210,170), "Position:", (0, 0, 0), font = font)
-        image_editable.text((210,220), "Height:", (0, 0, 0), font = font)
-        # print generell information of player
-        image_editable.text((210,140), values["Tm"], (0, 0, 0), font = font)
-        image_editable.text((210,190), values["Position"], (0, 0, 0), font = font)
-        image_editable.text((210,240), str(values["Height"]), (0, 0, 0), font = font)
-        
-        
-        ### print stats below the foto ####
-        # Points per Game
-        image_editable.text((310,320), str(values["PTS"]), (0, 0, 0), font = font_three)
-        image_editable.text((210,320), "Points:", (0, 0, 0), font = font_three)
-        # Assists
-        image_editable.text((310,395), str(values["AST"]), (0, 0, 0), font = font_three)
-        image_editable.text((210,395), "AST:", (0, 0, 0), font = font_three)
-        # 3er%
-        image_editable.text((310,470), str(values["3P%"]), (0, 0, 0), font = font_three)
-        image_editable.text((210,470), "3P%:", (0, 0, 0), font = font_three)
-        # FT%
-        image_editable.text((310,545), str(values["FG%"]), (0, 0, 0), font = font_three)
-        image_editable.text((210,545), "FG%:", (0, 0, 0), font = font_three)
-        # Rebounds
-        image_editable.text((550,320), str(round((values["Rebounds"]),1)), (0, 0, 0), font = font_three)
-        image_editable.text((420,320), "Rebounds:", (0, 0, 0), font = font_three)
-        # Steals
-        image_editable.text((550,395), str(values["STL"]), (0, 0, 0), font = font_three)
-        image_editable.text((420,395), "Steals:", (0, 0, 0), font = font_three)
-        # Blocks
-        image_editable.text((550,470), str(values["BLK"]), (0, 0, 0), font = font_three)
-        image_editable.text((420,470), "Blocks:", (0, 0, 0), font = font_three)
-        # Overall
-        image_editable.text((550,545), str(int(values["Overall"])), (0, 0, 0), font = font_three)
-        image_editable.text((420,545), "Overall:", (0, 0, 0), font = font_three)
-
-
-
-
-        # print image on card
-        if not math.isnan(values["PERSON_ID"]):
-            url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(values["PERSON_ID"])  + ".png"
-            print(url)
-            my_image_two = getImage(url) 
-            box = (280, 75, 620, 320)
-            my_image.paste(my_image_two, (335, 75))
-       
-        print(values)
-
-    
-
-    '''
-    split_name = Name.split(' ')
-    print(split_name)
-
-    url = "https://nba-players.herokuapp.com/players/" + split_name[1] + "/" + split_name[0]
-    my_image_two = getImage(url) 
-    '''
-
-    # save and print card
   
-    my_image.save("result.png")
-    plt.imshow(mpimg.imread('result.png'))
-    plt.show()
+    
 
 
 
@@ -178,11 +205,22 @@ def getImage(url):
 
 
 
+def bing_get_image(query_string):
+
+    downloader.download(query_string, limit=1,  output_dir='other_players',
+    adult_filter_off=True, force_replace=False, timeout=60)
+
+    image_two = Image.open("other_players/" + query_string + "/Image_1.jpg")
+
+    return image_two
+
 
 ########################  Main = Take Input and get Card #################################
 '''
 Example Players:
 # LeBron James
+# Nikola Jokic
+# Luka Doncic
 # Kevin Durant
 # Stephen Curry
 # Trae Young
@@ -208,7 +246,7 @@ Example Players:
 
 '''
 
-Input = "Kevin Love"
+Input = "Dennis Schroder"
 showCard(Input)
 
 
@@ -229,10 +267,10 @@ showCard(Input)
 
 
 
-
-
-
 '''
+
+
+
 def getImage(Player):
 
     driver = webdriver.Chrome("./chromedriver")
@@ -248,9 +286,6 @@ def getImage(Player):
 
 
 
-    from bs4 import BeautifulSoup
-import urllib2
-import re
 
 
 def getImage(url):
