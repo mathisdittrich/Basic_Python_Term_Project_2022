@@ -231,7 +231,8 @@ Example Players:
 # Steven Adams
 # Kevin Love
 
+
 '''
 
-Input = "Giannis Antetokounmpo"
+Input = "Nikola Jokic"
 showCard(Input)
