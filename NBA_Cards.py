@@ -12,6 +12,8 @@ import math
 import os  
 from bing_image_downloader import downloader
 import unicodedata
+import os.path
+from os import path
 
 
 
@@ -57,6 +59,7 @@ player_id = player_id[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
 
 
 
+
 ################ Merge Datasets & store the final one ############################################################
 
 # prepare to merge on Name column & merge data sets
@@ -68,6 +71,8 @@ final_data = pd.merge(Generell_Information, Stats, on="Name", how = "inner") # m
 player_id = player_id.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
 final_data = pd.merge(final_data, player_id, on="Name", how = "left") # merge 
 
+#mask = final_data["Name"] != "David Johnson"
+#final_data = final_data[mask]
 
 # store final_data set as csv-file
 os.makedirs('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project', exist_ok=True)  
@@ -76,10 +81,9 @@ final_data.to_csv('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project/fi
 
 
 
-
 ################ Card Visualisation #############################################################
 
-def showCard(Name):
+def saveCard(Name):
 
     # print the stats of the player on the card
     for i in range(len(final_data)):
@@ -151,10 +155,11 @@ def showCard(Name):
             image_editable.text((420,545), "Overall:", (0, 0, 0), font = font_three)
 
 
-
+            #if final_data["Name"][i] == "David Johnson":
+            #    final_data["PERSON_ID"][i] = np.empty
             
             # print image from URL via Player_ID
-            if not math.isnan(final_data["PERSON_ID"][i]):
+            if not math.isnan(final_data["PERSON_ID"][i]) and final_data["Name"][i] != "David Johnson":
                 url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(int(final_data["PERSON_ID"][i]))  + ".png"
                 print(url)
                 my_image_two = getImage(url) 
@@ -167,13 +172,12 @@ def showCard(Name):
                 my_image_three = my_image_three.resize(box) 
                 my_image.paste(my_image_three, (335, 75))
 
-            # save and print card
-            my_image.save("result.png")
-            plt.imshow(mpimg.imread('result.png'))
-            plt.show()
+            # save card
+            my_image.save("all_players/"+final_data["Name"][i]+".png")
+    
+    return my_image
+
         
-
-
 
 
 
@@ -193,13 +197,40 @@ def bing_get_image(query_string):
 
     downloader.download(query_string, limit=1,  output_dir='other_players',
     adult_filter_off=True, force_replace=False, timeout=60)
-
-    image_two = Image.open("other_players/" + query_string + "/Image_1.jpg")
+    
+    if path.exists( "other_players/" + query_string + "/Image_1.jpg"):
+        image_two = Image.open("other_players/" + query_string + "/Image_1.jpg")
+    elif path.exists( "other_players/" + query_string + "/Image_1.jpeg"):
+        image_two = Image.open("other_players/" + query_string + "/Image_1.jpeg")
+    elif path.exists( "other_players/" + query_string + "/Image_1.png"):
+        image_two = Image.open("other_players/" + query_string + "/Image_1.png")
 
     return image_two
 
 
 
+
+######################## show card ########################################
+
+def showCard(card):
+    card.save("result.png")
+    plt.imshow(mpimg.imread('result.png'))
+    plt.show()
+
+
+
+
+
+######################## Make a folder with every player ########################################
+
+def saveAllCards():
+
+    for i in range(len(final_data)):
+        name = final_data["Name"][i]
+        print(name)
+        saveCard(name)
+
+saveAllCards()
 
 
 ########################  Main = Take Input and get Card #################################
@@ -234,5 +265,5 @@ Example Players:
 
 '''
 
-Input = "Nikola Jokic"
-showCard(Input)
+Input = "Kessler Edwards"
+showCard(saveCard(Input))
