@@ -247,7 +247,9 @@ def saveAllCards():
         saveCard(name)
     
 
-saveAllCards()
+# this takes a while - up to 10 minutes 
+# and all cards are already in the folder all_players 
+# saveAllCards()
 
 
 ########################  Main = Take Input and get Card #################################
