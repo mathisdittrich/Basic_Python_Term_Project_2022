@@ -166,7 +166,7 @@ def saveCard(Name):
                 my_image.paste(my_image_two, (335, 75))
 
             # ELSE: print image from bing search
-            else: 
+            elif final_data["Name"][i] != "Armoni Brooks": 
                 my_image_three = bing_get_image(Name) # + " official picture"
                 box = (265,200)
                 my_image_three = my_image_three.resize(box) 
@@ -224,8 +224,23 @@ def showCard(card):
 ######################## Make a folder with every player ########################################
 
 def saveAllCards():
+    '''
+    for i in range(1,100):
+        name = final_data["Name"][i]
+        print(name)
+        saveCard(name)
 
-    for i in range(len(final_data)):
+    for i in range(101,200):
+        name = final_data["Name"][i]
+        print(name)
+        saveCard(name)
+
+    for i in range(201,300):
+        name = final_data["Name"][i]
+        print(name)
+        saveCard(name)
+    '''
+    for i in range(301,len(final_data)):
         name = final_data["Name"][i]
         print(name)
         saveCard(name)
@@ -265,5 +280,5 @@ Example Players:
 
 '''
 
-Input = "Kessler Edwards"
+Input = "Armoni Brooks"
 showCard(saveCard(Input))
