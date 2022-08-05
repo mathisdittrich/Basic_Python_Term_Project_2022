@@ -1,4 +1,3 @@
-
 # import libraries
 from cmath import nan
 from io import BytesIO
@@ -17,61 +16,60 @@ from os import path
 
 
 
-################ Get Data ######################################################################
+
+
+##################################### Get Data #####################################
 
 # read the data
-Generell_Information = pd.read_csv('./Data/Player_Generell_Information.csv')
-Stats = pd.read_csv('./Data/Player_Stats.csv')
+general_information = pd.read_csv('./Data/Player_Generell_Information.csv')
+stats = pd.read_csv('./Data/Player_Stats.csv')
 player_id = pd.read_csv('./Data/Player_ID.csv')
 
 
 
 
 
-################ Data preprocessing ############################################################
+##################################### Data Preprocessing #####################################
 
 # fill empty cells with zeros 
 # so that the overall score can be calculated for every player
-Stats.fillna(0, inplace=True)
+stats.fillna(0, inplace=True)
 
 # normalize special names to normal letters
 # example = "Luka Dončić" to "Luka Doncic"
-for i in range(len(Stats["Player"])):
-    Stats["Player"][i] = str(unicodedata.normalize('NFKD', Stats["Player"][i]).encode('ascii', 'ignore'))
-    Stats["Player"][i] = Stats["Player"][i][2:len(Stats["Player"][i])-1]
+for i in range(len(stats["Player"])):
+    stats["Player"][i] = str(unicodedata.normalize('NFKD', stats["Player"][i]).encode('ascii', 'ignore'))
+    stats["Player"][i] = stats["Player"][i][2:len(stats["Player"][i])-1]
 
-# add Rebound Column
-Rebounds = Stats["ORB"] + Stats["DRB"]
-Stats["Rebounds"] = Rebounds
+# add Rebound column
+rebounds = stats["ORB"] + stats["DRB"]
+stats["Rebounds"] = rebounds
 
-# add Overall Column
+# add Overall column
 # the current MVP gets the score 99 xD
-Overall = Stats["Rebounds"] + Stats["PTS"] + 3*Stats["BLK"] + 2*Stats["AST"] + 3*Stats["STL"] + Stats["3P%"]*30 + Stats["FG%"]*30 
-normalized_Overall = (Overall-Overall.min())/(Overall.max()-Overall.min())*100
-Stats["Overall"] = normalized_Overall
+overall = stats["Rebounds"] + stats["PTS"] + 3*stats["BLK"] + 2*stats["AST"] + 3*stats["STL"] + stats["3P%"]*30 + stats["FG%"]*30 
+normalized_overall = (overall-overall.min())/(overall.max()-overall.min())*100
+stats["Overall"] = normalized_overall
 
 # take only iformation we need
-Generell_Information = Generell_Information[["Name", "Position","Age", "Height"]]
-Stats = Stats[Stats["Season"] == "2021-22"] # only Stats from the season 2021/22
-Stats = Stats[["Player", "FG%", "3P%", "AST", "TOV", "PTS", "Tm", "Rebounds", "STL", "BLK", "Overall"]]
+general_information = general_information[["Name", "Position","Age", "Height"]]
+stats = stats[stats["Season"] == "2021-22"] # only stats from the season 2021/22
+stats = stats[["Player", "FG%", "3P%", "AST", "TOV", "PTS", "Tm", "Rebounds", "STL", "BLK", "Overall"]]
 player_id = player_id[["DISPLAY_FIRST_LAST", "PERSON_ID"]]
 
 
 
 
 
-
-################ Merge Datasets & store the final one ############################################################
+##################################### Merge Datasets & Store the final one #####################################
 
 # prepare to merge on Name column & merge data sets
-Stats = Stats.rename({"Player": "Name"}, axis= "columns")
-final_data = pd.merge(Generell_Information, Stats, on="Name", how = "inner") # merge 
-
+stats = stats.rename({"Player": "Name"}, axis= "columns")
+final_data = pd.merge(general_information, stats, on="Name", how = "inner") # merge 
 
 # prepare to merge on Name column & merge data sets
 player_id = player_id.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
 final_data = pd.merge(final_data, player_id, on="Name", how = "left") # merge 
-
 
 # store final_data set as csv-file
 os.makedirs('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project', exist_ok=True)  
@@ -80,13 +78,34 @@ final_data.to_csv('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project/fi
 
 
 
-################ save required Card #############################################################
 
-def saveCard(Name):
+##################################### Save Required Card #####################################
+
+def save_card(name):
+    '''Generate an NBA Card of a given player
+    
+    Args:
+        name: string of the name of the player we want to generate a card for
+    
+    Returns:
+        image of the generated NBA card 
+    '''
+
+    # if input player is not in dataset - return empty card
+    if (not name in final_data["Name"]):
+        print("------------------------------------------")
+        print("Player does not exist.")
+        print("------------------------------------------")
+        my_image =  Image.open("card.png") # load image
+        font = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 20) # prepare Font
+        image_editable = ImageDraw.Draw(my_image) # prepare for change
+        image_editable.text((220, 630), "Player does not exist", (256, 256, 256), font = font)
+        
+
 
     # print the stats of the player on the card
     for i in range(len(final_data)):
-        if final_data["Name"][i] == Name:
+        if final_data["Name"][i] == name:
 
             # prepare the card and settings
             my_image = Image.open("card.png") # load image
@@ -96,7 +115,6 @@ def saveCard(Name):
             font_three = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 25) # prepare Font
             font_four = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 35) # prepare Font
 
-
             # design card
             streifen = Image.open("streifen.png")
             my_image.paste(streifen, (200, 300))
@@ -104,18 +122,19 @@ def saveCard(Name):
             my_image.paste(streifen, (200, 450))
             my_image.paste(streifen, (405, 450))
         
-
             # print name on the bottom
-            if len(final_data["Name"][i]) < 14:    image_editable.text((220, 630), final_data["Name"][i], (256, 256, 256), font = font_two)
-            else:   image_editable.text((220, 640), final_data["Name"][i], (256, 256, 256), font = font_four)
+            if len(final_data["Name"][i]) < 14:
+                image_editable.text((220, 630), final_data["Name"][i], (256, 256, 256), font = font_two)
+            else:
+                image_editable.text((220, 640), final_data["Name"][i], (256, 256, 256), font = font_four)
             
 
-            ### print generell information on the left upper corner ###
+            ### print general information on the left upper corner ###
             # make the layout for the stats
             image_editable.text((210,120), "Team:", (0, 0, 0), font = font)
             image_editable.text((210,170), "Position:", (0, 0, 0), font = font)
             image_editable.text((210,220), "Height:", (0, 0, 0), font = font)
-            # print generell information of player
+            # print general information of player
             image_editable.text((210,140), final_data["Tm"][i], (0, 0, 0), font = font)
             image_editable.text((210,190), final_data["Position"][i], (0, 0, 0), font = font)
             image_editable.text((210,240), str(final_data["Height"][i]), (0, 0, 0), font = font)
@@ -142,7 +161,6 @@ def saveCard(Name):
             else: 
                 image_editable.text((420,320), "Reb:", (0, 0, 0), font = font_three)
                 image_editable.text((535,320), str(round((final_data["Rebounds"][i]),1)), (0, 0, 0), font = font_three)
-
             # Steals
             image_editable.text((550,395), str(final_data["STL"][i]), (0, 0, 0), font = font_three)
             image_editable.text((420,395), "Steals:", (0, 0, 0), font = font_three)
@@ -159,13 +177,13 @@ def saveCard(Name):
             if not math.isnan(final_data["PERSON_ID"][i]) and final_data["Name"][i] != "David Johnson":
                 url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(int(final_data["PERSON_ID"][i]))  + ".png"
                 print(url)
-                my_image_two = getImage(url) 
+                my_image_two = get_image(url) 
                 my_image.paste(my_image_two, (335, 75))
 
             # ELSE: print image from bing search
             # there was an indexing problem with Armoni Brooks - only with him
             elif final_data["Name"][i] != "Armoni Brooks": 
-                my_image_three = bing_get_image(Name) 
+                my_image_three = bing_get_image(name) 
                 box = (265,200)
                 my_image_three = my_image_three.resize(box) 
                 my_image.paste(my_image_three, (335, 75))
@@ -173,35 +191,57 @@ def saveCard(Name):
             # save card
             my_image.save("all_players/"+final_data["Name"][i]+".png")
     
-    return my_image
-
         
 
+    return my_image
 
 
-######################## Function that gets Images from Web  #################################
 
-# for official images from nba-website
-def getImage(url):
+
+
+##################################### Functions that get Images from Web  #####################################
+
+# for official images from NBA website
+def get_image(url):
+    '''get a photo from an URL
+    
+    Args:
+        url: URL where image can be found
+    
+    Returns:
+        image from the URL
+    '''
 
     response = requests.get(url)
     image = Image.open(BytesIO(response.content))
 
     return image
 
-
-# for pictures from bing-websearch
+# for pictures from bing web search
 def bing_get_image(query_string):
-
-    downloader.download(query_string, limit=1,  output_dir='other_players',
-    adult_filter_off=True, force_replace=False, timeout=60)
+    '''get a photo from bing web search
     
-    # look in which format the picture was downlowded, so that the Image we wanne open exists
-    if path.exists( "other_players/" + query_string + "/Image_1.jpg"):
+    Args:
+        query_string: string that will be searched for
+    
+    Returns:
+        image from bing
+    '''
+
+    downloader.download(
+        query_string,
+        limit=1,
+        output_dir='other_players',
+        adult_filter_off=True,
+        force_replace=False,
+        timeout=60)
+    
+    # look in which format the picture was downlowded, so that the Image we want to open exists
+    if path.exists("other_players/" + query_string + "/Image_1.jpg"):
         image_two = Image.open("other_players/" + query_string + "/Image_1.jpg")
-    elif path.exists( "other_players/" + query_string + "/Image_1.jpeg"):
+    elif path.exists("other_players/" + query_string + "/Image_1.jpeg"):
         image_two = Image.open("other_players/" + query_string + "/Image_1.jpeg")
-    elif path.exists( "other_players/" + query_string + "/Image_1.png"):
+    elif path.exists("other_players/" + query_string + "/Image_1.png"):
         image_two = Image.open("other_players/" + query_string + "/Image_1.png")
 
     return image_two
@@ -209,9 +249,16 @@ def bing_get_image(query_string):
 
 
 
-######################## show card ########################################
 
-def showCard(card):
+##################################### Show Card #####################################
+
+def show_card(card):
+    '''show card that was generated with save_card(name)
+    
+    Args:
+        card: card that was generated with the function save_card(name)
+    '''
+
     card.save("result.png")
     plt.imshow(mpimg.imread('result.png'))
     plt.show()
@@ -220,39 +267,50 @@ def showCard(card):
 
 
 
-######################## Make a folder with every player ########################################
+##################################### Make a Folder with every Player #####################################
 
-def saveAllCards():
-    # I did it not all in once, because it takes a while 
-    # and it is easier to fix bugs this way 
+def save_all_cards():
+    '''Generate a card for every player in the data set and store them in a folder
 
+    Iteration through data set is split into 4 parts, because it takes a while and it is easier to fix bugs this way
+    
+    Returns:
+        a folder with all NBA player cards
+    '''
+
+    # first 100 rows
     for i in range(0,100):
         name = final_data["Name"][i]
         print(name)
-        saveCard(name)
+        save_card(name)
     
+    # second 100 rows
     for i in range(101,200):
         name = final_data["Name"][i]
         print(name)
-        saveCard(name)
+        save_card(name)
 
+    # third 100 rows
     for i in range(201,300):
         name = final_data["Name"][i]
         print(name)
-        saveCard(name)
+        save_card(name)
     
+    # last rows
     for i in range(301,len(final_data)):
         name = final_data["Name"][i]
         print(name)
-        saveCard(name)
+        save_card(name)
     
+# save_all_cards()
+# this takes a while - up to 10 minutes
+# and all cards are already in the folder all_players
 
-# this takes a while - up to 10 minutes 
-# and all cards are already in the folder all_players 
-# saveAllCards()
 
 
-########################  Main = Take Input and get Card #################################
+
+
+#####################################  Main = Take Input and Get Card #####################################
 
 # you can get a card to every NBA-Player from the season 2021/22 
 # if the player switched teams - a card for every team will be shown
@@ -286,5 +344,8 @@ Example Players:
 # Kevin Love
 '''
 
-Input = "LeBron James"
-showCard(saveCard(Input))
+#### write the name in the terminal or insert it directly in the code ###
+nba_player = input("Enter your favourite NBA player: ")
+#nba_player = "LeBron James"
+
+show_card(save_card(nba_player))
