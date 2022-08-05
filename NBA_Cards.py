@@ -93,9 +93,7 @@ def save_card(name):
 
     # if input player is not in dataset - return empty card
     if (not name in final_data["Name"]):
-        print("------------------------------------------")
-        print("Player does not exist.")
-        print("------------------------------------------")
+        
         my_image =  Image.open("card.png") # load image
         font = ImageFont.truetype("./Roboto/Roboto-Black.ttf", 20) # prepare Font
         image_editable = ImageDraw.Draw(my_image) # prepare for change
