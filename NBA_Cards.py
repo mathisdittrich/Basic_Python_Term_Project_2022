@@ -31,7 +31,7 @@ player_id = pd.read_csv('./Data/Player_ID.csv')
 ################ Data preprocessing ############################################################
 
 # fill empty cells with zeros 
-# so that the overall score can be calculatet for every player
+# so that the overall score can be calculated for every player
 Stats.fillna(0, inplace=True)
 
 # normalize special names to normal letters
@@ -45,6 +45,7 @@ Rebounds = Stats["ORB"] + Stats["DRB"]
 Stats["Rebounds"] = Rebounds
 
 # add Overall Column
+# the current MVP gets the score 99 xD
 Overall = Stats["Rebounds"] + Stats["PTS"] + 3*Stats["BLK"] + 2*Stats["AST"] + 3*Stats["STL"] + Stats["3P%"]*30 + Stats["FG%"]*30 
 normalized_Overall = (Overall-Overall.min())/(Overall.max()-Overall.min())*100
 Stats["Overall"] = normalized_Overall
@@ -71,8 +72,6 @@ final_data = pd.merge(Generell_Information, Stats, on="Name", how = "inner") # m
 player_id = player_id.rename({"DISPLAY_FIRST_LAST": "Name"}, axis= "columns")
 final_data = pd.merge(final_data, player_id, on="Name", how = "left") # merge 
 
-#mask = final_data["Name"] != "David Johnson"
-#final_data = final_data[mask]
 
 # store final_data set as csv-file
 os.makedirs('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project', exist_ok=True)  
@@ -81,7 +80,7 @@ final_data.to_csv('/Users/mathis/Desktop/UNI/SS2022/Basic_Python/Term_Project/fi
 
 
 
-################ Card Visualisation #############################################################
+################ save required Card #############################################################
 
 def saveCard(Name):
 
@@ -105,12 +104,12 @@ def saveCard(Name):
             my_image.paste(streifen, (200, 450))
             my_image.paste(streifen, (405, 450))
         
-            print(final_data["Name"][i])
 
             # print name on the bottom
-            if len(final_data["Name"][i]) < 16:    image_editable.text((220, 630), final_data["Name"][i], (256, 256, 256), font = font_two)
+            if len(final_data["Name"][i]) < 14:    image_editable.text((220, 630), final_data["Name"][i], (256, 256, 256), font = font_two)
             else:   image_editable.text((220, 640), final_data["Name"][i], (256, 256, 256), font = font_four)
             
+
             ### print generell information on the left upper corner ###
             # make the layout for the stats
             image_editable.text((210,120), "Team:", (0, 0, 0), font = font)
@@ -154,11 +153,9 @@ def saveCard(Name):
             image_editable.text((550,545), str(int(final_data["Overall"][i])), (0, 0, 0), font = font_three)
             image_editable.text((420,545), "Overall:", (0, 0, 0), font = font_three)
 
-
-            #if final_data["Name"][i] == "David Johnson":
-            #    final_data["PERSON_ID"][i] = np.empty
             
             # print image from URL via Player_ID
+            # David Johnson had a Player_ID in the dataset, but is not a NBA_Player anymore, so that he has no Link on the website
             if not math.isnan(final_data["PERSON_ID"][i]) and final_data["Name"][i] != "David Johnson":
                 url = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/" + str(int(final_data["PERSON_ID"][i]))  + ".png"
                 print(url)
@@ -166,8 +163,9 @@ def saveCard(Name):
                 my_image.paste(my_image_two, (335, 75))
 
             # ELSE: print image from bing search
+            # there was an indexing problem with Armoni Brooks - only with him
             elif final_data["Name"][i] != "Armoni Brooks": 
-                my_image_three = bing_get_image(Name) # + " official picture"
+                my_image_three = bing_get_image(Name) 
                 box = (265,200)
                 my_image_three = my_image_three.resize(box) 
                 my_image.paste(my_image_three, (335, 75))
@@ -181,9 +179,9 @@ def saveCard(Name):
 
 
 
-######################## Function that gets Images from Google  #################################
+######################## Function that gets Images from Web  #################################
 
-# for official images from website
+# for official images from nba-website
 def getImage(url):
 
     response = requests.get(url)
@@ -192,12 +190,13 @@ def getImage(url):
     return image
 
 
-# for pictures from websearch
+# for pictures from bing-websearch
 def bing_get_image(query_string):
 
     downloader.download(query_string, limit=1,  output_dir='other_players',
     adult_filter_off=True, force_replace=False, timeout=60)
     
+    # look in which format the picture was downlowded, so that the Image we wanne open exists
     if path.exists( "other_players/" + query_string + "/Image_1.jpg"):
         image_two = Image.open("other_players/" + query_string + "/Image_1.jpg")
     elif path.exists( "other_players/" + query_string + "/Image_1.jpeg"):
@@ -224,12 +223,14 @@ def showCard(card):
 ######################## Make a folder with every player ########################################
 
 def saveAllCards():
-    '''
-    for i in range(1,100):
+    # I did it not all in once, because it takes a while 
+    # and it is easier to fix bugs this way 
+
+    for i in range(0,100):
         name = final_data["Name"][i]
         print(name)
         saveCard(name)
-
+    
     for i in range(101,200):
         name = final_data["Name"][i]
         print(name)
@@ -239,16 +240,21 @@ def saveAllCards():
         name = final_data["Name"][i]
         print(name)
         saveCard(name)
-    '''
+    
     for i in range(301,len(final_data)):
         name = final_data["Name"][i]
         print(name)
         saveCard(name)
+    
 
 saveAllCards()
 
 
 ########################  Main = Take Input and get Card #################################
+
+# you can get a card to every NBA-Player from the season 2021/22 
+# if the player switched teams - a card for every team will be shown
+
 '''
 Example Players:
 # LeBron James
@@ -276,9 +282,7 @@ Example Players:
 # Russell Westbrook
 # Steven Adams
 # Kevin Love
-
-
 '''
 
-Input = "Armoni Brooks"
+Input = "LeBron James"
 showCard(saveCard(Input))
